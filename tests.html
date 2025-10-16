@@ -57,7 +57,7 @@
 
     const v = new ValidationManager();
 
-    // Simple assertion helper
+    
     function assert(condition, message) {
       const p = document.createElement('div');
       p.textContent = message;
@@ -67,33 +67,33 @@
       return condition;
     }
 
-    // Run tests
+    
     const results = [];
 
     try {
-      // 1) Description: required and no leading/trailing spaces
+      
       results.push(assert(!v.validateDescription('').isValid, 'Description rejected when empty'));
       results.push(assert(v.validateDescription('Coffee at cafe').isValid, 'Description accepts normal text'));
 
-      // 2) Amount: positive with up to 2 decimals
+      
       results.push(assert(!v.validateAmount('0').isValid, 'Amount rejects zero'));
       results.push(assert(v.validateAmount('10.50').isValid, 'Amount accepts 10.50'));
       results.push(assert(!v.validateAmount('10.123').isValid, 'Amount rejects more than 2 decimals'));
 
-      // 3) Date: valid, not future, not older than 10 years
+      
       const today = new Date().toISOString().split('T')[0];
       results.push(assert(v.validateDate(today).isValid, 'Date accepts today'));
       results.push(assert(!v.validateDate('2100-01-01').isValid, 'Date rejects future date'));
 
-      // 4) Category: letters, space, hyphen allowed
+      
       results.push(assert(v.validateCategory('Food').isValid, 'Category accepts "Food"'));
       results.push(assert(!v.validateCategory('Food123').isValid, 'Category rejects alphanumeric'));
 
-      // Advanced rule: duplicate words detection in description
+      
       const dup = v.validateDescription('paid paid for coffee');
       results.push(assert(!dup.isValid && dup.error && dup.error.includes('Duplicate words'), 'Advanced: duplicate words detected'));
 
-      // Summary
+      
       const passed = results.filter(Boolean).length;
       const total = results.length;
       const summary = document.createElement('div');
@@ -107,7 +107,7 @@
       document.getElementById('results').appendChild(e);
     }
 
-    // Demo form behavior
+    
     const demoForm = document.getElementById('demo-form');
     const descInput = document.getElementById('demo-description');
     const amtInput = document.getElementById('demo-amount');
