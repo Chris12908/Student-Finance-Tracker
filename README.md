@@ -22,3 +22,8 @@ Data is stored locally in your browser (localStorage). That means your data stay
 
 That's it! this app is designed to be simple and easy to use.
 
+
+Demo video : https://youtu.be/JzeFuZ7jZy4
+
+
+
