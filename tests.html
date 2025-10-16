@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FinanceTracker - Validation Tests</title>
+  <link rel="stylesheet" href="styles/main.css">
+  <style>
+    body { padding: 2rem; }
+    .test-pass { color: #0b6623; }
+    .test-fail { color: #b91c1c; }
+    .results { margin-top: 1rem; }
+    .demo-form { max-width: 600px; margin-top: 2rem; }
+    .demo-form .error-message { display: block; }
+  </style>
+</head>
+<body>
+  <h1>ValidationManager Tests</h1>
+  <p>Automated assertions for validation rules (description, amount, date, category, advanced duplicate-words).</p>
+
+  <div id="results" class="results" aria-live="polite"></div>
+
+  <h2>Demo form (shows inline error UI)</h2>
+  <form id="demo-form" class="demo-form" novalidate>
+    <div class="form-group">
+      <label for="demo-description">Description *</label>
+      <input id="demo-description" name="description">
+      <div id="demo-description-error" class="error-message" role="alert"></div>
+    </div>
+
+    <div class="form-group">
+      <label for="demo-amount">Amount *</label>
+      <input id="demo-amount" name="amount">
+      <div id="demo-amount-error" class="error-message" role="alert"></div>
+    </div>
+
+    <div class="form-group">
+      <label for="demo-date">Date *</label>
+      <input id="demo-date" name="date" type="date">
+      <div id="demo-date-error" class="error-message" role="alert"></div>
+    </div>
+
+    <div class="form-group">
+      <label for="demo-category">Category *</label>
+      <input id="demo-category" name="category">
+      <div id="demo-category-error" class="error-message" role="alert"></div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Validate</button>
+      <button type="button" id="demo-reset" class="btn btn-secondary">Reset</button>
+    </div>
+  </form>
+
+  <script type="module">
+    import { ValidationManager } from './scripts/validators.js';
+
+    const v = new ValidationManager();
+
+    // Simple assertion helper
+    function assert(condition, message) {
+      const p = document.createElement('div');
+      p.textContent = message;
+      if (condition) p.className = 'test-pass';
+      else p.className = 'test-fail';
+      document.getElementById('results').appendChild(p);
+      return condition;
+    }
+
+    // Run tests
+    const results = [];
+
+    try {
+      // 1) Description: required and no leading/trailing spaces
+      results.push(assert(!v.validateDescription('').isValid, 'Description rejected when empty'));
+      results.push(assert(v.validateDescription('Coffee at cafe').isValid, 'Description accepts normal text'));
+
+      // 2) Amount: positive with up to 2 decimals
+      results.push(assert(!v.validateAmount('0').isValid, 'Amount rejects zero'));
+      results.push(assert(v.validateAmount('10.50').isValid, 'Amount accepts 10.50'));
+      results.push(assert(!v.validateAmount('10.123').isValid, 'Amount rejects more than 2 decimals'));
+
+      // 3) Date: valid, not future, not older than 10 years
+      const today = new Date().toISOString().split('T')[0];
+      results.push(assert(v.validateDate(today).isValid, 'Date accepts today'));
+      results.push(assert(!v.validateDate('2100-01-01').isValid, 'Date rejects future date'));
+
+      // 4) Category: letters, space, hyphen allowed
+      results.push(assert(v.validateCategory('Food').isValid, 'Category accepts "Food"'));
+      results.push(assert(!v.validateCategory('Food123').isValid, 'Category rejects alphanumeric'));
+
+      // Advanced rule: duplicate words detection in description
+      const dup = v.validateDescription('paid paid for coffee');
+      results.push(assert(!dup.isValid && dup.error && dup.error.includes('Duplicate words'), 'Advanced: duplicate words detected'));
+
+      // Summary
+      const passed = results.filter(Boolean).length;
+      const total = results.length;
+      const summary = document.createElement('div');
+      summary.innerHTML = `<strong>Passed ${passed} / ${total} tests</strong>`;
+      document.getElementById('results').appendChild(summary);
+
+    } catch (err) {
+      const e = document.createElement('div');
+      e.className = 'test-fail';
+      e.textContent = 'Test runner error: ' + err.message;
+      document.getElementById('results').appendChild(e);
+    }
+
+    // Demo form behavior
+    const demoForm = document.getElementById('demo-form');
+    const descInput = document.getElementById('demo-description');
+    const amtInput = document.getElementById('demo-amount');
+    const dateInput = document.getElementById('demo-date');
+    const catInput = document.getElementById('demo-category');
+
+    function clearErrors() {
+      document.querySelectorAll('#demo-form .error-message').forEach(el => { el.textContent = ''; el.classList.remove('show'); });
+    }
+
+    demoForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      clearErrors();
+
+      const desc = descInput.value;
+      const amt = amtInput.value;
+      const date = dateInput.value;
+      const cat = catInput.value;
+
+      const descRes = v.validateDescription(desc);
+      const amtRes = v.validateAmount(amt);
+      const dateRes = v.validateDate(date);
+      const catRes = v.validateCategory(cat);
+
+      if (!descRes.isValid) {
+        document.getElementById('demo-description-error').textContent = descRes.error;
+        document.getElementById('demo-description-error').classList.add('show');
+      }
+
+      if (!amtRes.isValid) {
+        document.getElementById('demo-amount-error').textContent = amtRes.error;
+        document.getElementById('demo-amount-error').classList.add('show');
+      }
+
+      if (!dateRes.isValid) {
+        document.getElementById('demo-date-error').textContent = dateRes.error;
+        document.getElementById('demo-date-error').classList.add('show');
+      }
+
+      if (!catRes.isValid) {
+        document.getElementById('demo-category-error').textContent = catRes.error;
+        document.getElementById('demo-category-error').classList.add('show');
+      }
+
+      if (descRes.isValid && amtRes.isValid && dateRes.isValid && catRes.isValid) {
+        alert('Demo form validation passed!');
+      }
+    });
+
+    document.getElementById('demo-reset').addEventListener('click', () => {
+      demoForm.reset();
+      clearErrors();
+    });
+  </script>
+</body>
+</html>
