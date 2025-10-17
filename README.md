@@ -25,5 +25,5 @@ That's it! this app is designed to be simple and easy to use.
 
 Demo video : https://youtu.be/JzeFuZ7jZy4
 
-
+Deployment link :  https://chris12908.github.io/Student-Finance-Tracker/
 
